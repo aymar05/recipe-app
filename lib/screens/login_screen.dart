@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -14,11 +13,42 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  // Fonction de connexion simulée (sans Firebase)
+  void _handleLogin() {
+    if (_formKey.currentState!.validate()) {
+      // Simulation d'une tentative de connexion réussie.
+      // Dans une application réelle, vous appelleriez ici un service
+      // d'authentification local ou un API.
+      
+      // Simuler un petit délai pour l'expérience utilisateur
+      Future.delayed(const Duration(milliseconds: 500), () {
+        // Afficher un succès et naviguer
+        Get.snackbar(
+          "Succès", 
+          "Connexion réussie (simulée)",
+          backgroundColor: Colors.green,
+          colorText: Colors.white
+        );
+        // Note: Assurez-vous que la route '/home' est définie dans Get.
+        Get.toNamed('/home'); 
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
+          // Arrière-plan (ImageAsset n'est pas inclus dans ce snippet,
+          // mais le code de l'arrière-plan est conservé.)
           Container(
             height: MediaQuery.of(context).size.height,
             decoration: const BoxDecoration(
@@ -28,10 +58,12 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
+          // Calque sombre
           Container(
             height: MediaQuery.of(context).size.height,
             color: Colors.black.withOpacity(0.5),
           ),
+          // Contenu du formulaire
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             width: MediaQuery.of(context).size.width,
@@ -75,6 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(55),
                           ),
+                          // Image Asset (conservée mais non résolue sans le fichier)
                           child: Image.asset(
                             "assets/images/splash.png",
                             width: 52,
@@ -86,14 +119,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     Column(
                       children: [
                         const SizedBox(height: 90),
+                        // Champ Email
                         SizedBox(
                           height: 45,
                           child: TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
+                            style: const TextStyle(color: Colors.white), // Ajouté pour la visibilité
                             validator: (value) {
                               if (value!.isEmpty) {
-                                return "Erreur de validation du champ.";
+                                return "Veuillez entrer votre email."; // Message de validation mis à jour
                               }
                               return null;
                             },
@@ -107,13 +142,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 28),
+                        // Champ Mot de passe
                         SizedBox(
                           height: 45,
                           child: TextFormField(
                             controller: _passwordController,
+                            obscureText: true, // Ajouté pour la sécurité
+                            style: const TextStyle(color: Colors.white), // Ajouté pour la visibilité
                             validator: (value) {
                               if (value!.isEmpty) {
-                                return "Erreur de validation du champ.";
+                                return "Veuillez entrer votre mot de passe."; // Message de validation mis à jour
                               }
                               return null;
                             },
@@ -140,35 +178,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                         const SizedBox(height: 28),
+                        // Bouton de Connexion (Mise à jour pour appeler _handleLogin)
                         SizedBox(
                           height: 45,
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () async {
-                              if (_formKey.currentState!.validate()) {
-                                try {
-                                  UserCredential user = await FirebaseAuth
-                                      .instance
-                                      .signInWithEmailAndPassword(
-                                    email: _emailController.text,
-                                    password: _passwordController.text,
-                                  );
-                                  if (user.user != null) {
-                                    Get.snackbar("Succès", "Connexion réussie",
-                                        backgroundColor: Colors.green,
-                                        colorText: Colors.white);
-                                    Get.toNamed('/home');
-                                  }
-                                } on FirebaseAuthException catch (e) {
-                                  if (e.code == 'INVALID_LOGIN_CREDENTIALS') {
-                                    Get.snackbar(
-                                        "Erreur", "Identifiants incorrects",
-                                        backgroundColor: Colors.red,
-                                        colorText: Colors.white);
-                                  }
-                                }
-                              }
-                            },
+                            onPressed: _handleLogin, // Appel de la fonction sans Firebase
                             style: ButtonStyle(
                               backgroundColor: WidgetStateProperty.all(
                                 const Color(0xFF34A853),
@@ -183,6 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 28),
+                        // Lien vers l'inscription
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -195,11 +211,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             GestureDetector(
                               onTap: () {
-                                Get.toNamed('/register');
+                                // Note: Assurez-vous que la route '/register' est définie dans Get.
+                                Get.toNamed('/register'); 
                               },
                               child: const Text(
                                 "S'inscrire",
-                                style: TextStyle(color: Colors.white),
+                                style: TextStyle(
+                                  color: Colors.white, 
+                                  fontWeight: FontWeight.bold, // Rendu plus visible
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             ),
                           ],

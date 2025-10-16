@@ -1,10 +1,9 @@
-import 'package:recipe_app/config/theme.dart';
+import 'package:flutter/material.dart';
 import 'package:recipe_app/screens/account/favourite_screen.dart';
 import 'package:recipe_app/screens/account/home_screen.dart';
 import 'package:recipe_app/screens/account/search_screen.dart';
 import 'package:recipe_app/screens/profile_page.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+import 'package:recipe_app/services/api_auth_service.dart'; // NOUVEL IMPORT pour la déconnexion via API
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
@@ -22,6 +21,19 @@ class _RootScreenState extends State<RootScreen> {
     ProfilePage(),
   ];
 
+  // Nouvelle fonction de déconnexion utilisant le service API
+  void _logout() async {
+    // 1. Appelle la méthode de déconnexion du service
+    await ApiAuthService().logout();
+
+    // 2. Ferme le Drawer
+    if (mounted) {
+      Navigator.pop(context); 
+      // 3. Navigue vers l'écran de connexion (en remplaçant toutes les routes précédentes)
+      Navigator.of(context).pushReplacementNamed('/login');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,8 +41,9 @@ class _RootScreenState extends State<RootScreen> {
         child: ListView(
           children: [
             DrawerHeader(
+              // Utilisation de Theme.of(context) pour accéder au thème
               decoration: BoxDecoration(
-                color: themeData.colorScheme.primary,
+                color: Theme.of(context).colorScheme.primary, 
               ),
               child: const Text(
                 'Menu',
@@ -41,10 +54,7 @@ class _RootScreenState extends State<RootScreen> {
               ),
             ),
             GestureDetector(
-              onTap: () {
-                FirebaseAuth.instance.signOut();
-                Navigator.pop(context);
-              },
+              onTap: _logout, // Appel à la nouvelle fonction de déconnexion
               child: const ListTile(
                 leading: Icon(Icons.logout),
                 title: Text('Déconnexion'),
