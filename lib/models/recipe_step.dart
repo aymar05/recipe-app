@@ -1,58 +1,58 @@
 import 'dart:convert';
 
-class Ingredient {
+class RecipeStep {
   int? id;
   String? name;
-  int? quantity;
-  String? measure;
+  String? description;
+  int? duration;
   int? recipeId;
   DateTime? createdAt;
   DateTime? updatedAt;
 
-  Ingredient({
+  RecipeStep({
     this.id,
     this.name,
-    this.quantity,
-    this.measure,
+    this.description,
+    this.duration,
     this.recipeId,
     this.createdAt,
     this.updatedAt,
   });
 
-  Ingredient copyWith({
+  RecipeStep copyWith({
     int? id,
     String? name,
-    int? quantity,
-    String? measure,
+    String? description,
+    int? duration,
     int? recipeId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return Ingredient(
+    return RecipeStep(
       id: id ?? this.id,
       name: name ?? this.name,
-      quantity: quantity ?? this.quantity,
-      measure: measure ?? this.measure,
+      description: description ?? this.description,
+      duration: duration ?? this.duration,
       recipeId: recipeId ?? this.recipeId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
-  factory Ingredient.fromRawJson(String str) {
-    return Ingredient.fromJson(json.decode(str));
+  factory RecipeStep.fromRawJson(String str) {
+    return RecipeStep.fromJson(json.decode(str));
   }
 
   String toRawJson() {
     return json.encode(toJson());
   }
 
-  factory Ingredient.fromJson(Map<String, dynamic> json) {
-    return Ingredient(
+  factory RecipeStep.fromJson(Map<String, dynamic> json) {
+    return RecipeStep(
       id: json["id"],
       name: json["name"],
-      quantity: json["quantity"],
-      measure: json["measure"],
+      description: json["description"],
+      duration: json["duration"],
       recipeId: json["recipe_id"],
       createdAt: json["created_at"] == null
           ? null
@@ -67,8 +67,8 @@ class Ingredient {
     return {
       "id": id,
       "name": name,
-      "quantity": quantity,
-      "measure": measure,
+      "description": description,
+      "duration": duration,
       "recipe_id": recipeId,
       "created_at": createdAt?.toIso8601String(),
       "updated_at": updatedAt?.toIso8601String(),

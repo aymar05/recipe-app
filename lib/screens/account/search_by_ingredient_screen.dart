@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:recipe_app/data/result_type.dart';
-import 'package:recipe_app/models/ingredient.dart';
+import 'package:recipe_app/models/ingredient_model.dart';
 import 'package:recipe_app/screens/account/search_result_screen.dart';
 import 'package:recipe_app/services/api_service.dart';
 import 'package:flutter/material.dart';

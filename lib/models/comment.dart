@@ -1,59 +1,54 @@
 import 'dart:convert';
 
-class Ingredient {
+class Comment {
   int? id;
-  String? name;
-  int? quantity;
-  String? measure;
+  String? text;
   int? recipeId;
+  int? userId;
   DateTime? createdAt;
   DateTime? updatedAt;
 
-  Ingredient({
+  Comment({
     this.id,
-    this.name,
-    this.quantity,
-    this.measure,
+    this.text,
     this.recipeId,
+    this.userId,
     this.createdAt,
     this.updatedAt,
   });
 
-  Ingredient copyWith({
+  Comment copyWith({
     int? id,
-    String? name,
-    int? quantity,
-    String? measure,
+    String? text,
     int? recipeId,
+    int? userId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return Ingredient(
+    return Comment(
       id: id ?? this.id,
-      name: name ?? this.name,
-      quantity: quantity ?? this.quantity,
-      measure: measure ?? this.measure,
+      text: text ?? this.text,
       recipeId: recipeId ?? this.recipeId,
+      userId: userId ?? this.userId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
-  factory Ingredient.fromRawJson(String str) {
-    return Ingredient.fromJson(json.decode(str));
+  factory Comment.fromRawJson(String str) {
+    return Comment.fromJson(json.decode(str));
   }
 
   String toRawJson() {
     return json.encode(toJson());
   }
 
-  factory Ingredient.fromJson(Map<String, dynamic> json) {
-    return Ingredient(
+  factory Comment.fromJson(Map<String, dynamic> json) {
+    return Comment(
       id: json["id"],
-      name: json["name"],
-      quantity: json["quantity"],
-      measure: json["measure"],
+      text: json["text"],
       recipeId: json["recipe_id"],
+      userId: json["user_id"],
       createdAt: json["created_at"] == null
           ? null
           : DateTime.parse(json["created_at"]),
@@ -66,10 +61,9 @@ class Ingredient {
   Map<String, dynamic> toJson() {
     return {
       "id": id,
-      "name": name,
-      "quantity": quantity,
-      "measure": measure,
+      "text": text,
       "recipe_id": recipeId,
+      "user_id": userId,
       "created_at": createdAt?.toIso8601String(),
       "updated_at": updatedAt?.toIso8601String(),
     };
