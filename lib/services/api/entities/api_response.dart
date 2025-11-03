@@ -6,7 +6,6 @@ class Success<T> extends ApiResponse<T> {
   Success(this.data);
 }
 
-
 class Failure<T> extends ApiResponse<T> {
   String? message;
   int code;
