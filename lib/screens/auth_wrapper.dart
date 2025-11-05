@@ -14,11 +14,7 @@ class AuthWrapper extends StatelessWidget {
       // Référence au contrôleur initialisé dans main.dart
       final authService = ApiAuthService.to;
 
-      // Votre ApiAuthService.to.checkAuthStatus() a déjà été appelé dans onInit.
-      // Si getToken est en cours (ou si le token est null), isAuthenticated.value sera false.
-      
-      // Ici, on vérifie directement l'état réactif du service
-      if (authService.isAuthenticated.value) {
+      if (authService.isAuthenticated) {
         // Utilisateur connecté
         return const RootScreen();
       } else {
@@ -26,16 +22,7 @@ class AuthWrapper extends StatelessWidget {
         return const LoginScreen();
       }
       
-      // NOTE IMPORTANTE: Le ApiAuthService.to.checkAuthStatus() gère l'état 'loading' 
-      // et met à jour isAuthenticated. Pour une implémentation plus stricte, 
-      // vous pourriez ajouter un état 'isLoading' dans ApiAuthService.
-      
-      // Étant donné que ApiAuthService.to.checkAuthStatus() est asynchrone, 
-      // il y a un très court laps de temps où isAuthenticated.value est false
-      // avant que le token ne soit lu. Pour éviter un flash rapide vers LoginScreen 
-      // si l'utilisateur est déjà connecté, vous devriez vérifier si le 
-      // 'checkAuthStatus' est terminé, ou accepter le comportement actuel où l'écran 
-      // de connexion/racine s'affiche presque immédiatement.
+    
     });
   }
 }

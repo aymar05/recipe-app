@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:recipe_app/services/api_auth_service.dart'; // Importation du service API
+import 'package:recipe_app/services/auth_service.dart';
+import 'package:recipe_app/models/requests/register_request.dart';
+import 'package:recipe_app/services/api_auth_service.dart';
+import 'package:recipe_app/models/auth_response.dart';
+import 'package:recipe_app/services/api/entities/api_response.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -17,7 +21,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // Ajout d'un contrôleur pour la confirmation du mot de passe (requis par Laravel)
   final TextEditingController _passwordConfirmationController = TextEditingController(); 
 
-  // État de chargement pour le bouton
   bool _isLoading = false;
 
   @override
@@ -31,65 +34,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // --- Nouvelle méthode de gestion de l'inscription API ---
   void _handleRegister() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+    if (!_formKey.currentState!.validate()) return;
 
-      final name = _nameController.text;
-      final email = _emailController.text;
-      final password = _passwordController.text;
-      final passwordConfirmation = _passwordConfirmationController.text;
+    setState(() => _isLoading = true);
 
-      if (password != passwordConfirmation) {
-         Get.snackbar(
-          "Erreur",
-          "Les mots de passe ne correspondent pas.",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          margin: const EdgeInsets.all(10),
-        );
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final passwordConfirmation = _passwordConfirmationController.text.trim();
 
+    if (password != passwordConfirmation) {
+      Get.snackbar("Erreur", "Les mots de passe ne correspondent pas", backgroundColor: Colors.red, colorText: Colors.white);
+      setState(() => _isLoading = false);
+      return;
+    }
 
-      final success = await ApiAuthService.to.register(
-        name, 
-        email, 
-        password,
+    final req = RegisterRequest(
+      name: name,
+      email: email,
+      password: password,
+      passwordConfirmation: passwordConfirmation,
       );
 
-      setState(() {
-        _isLoading = false;
-      });
+    final authService = AuthService();
+    try {
+      final ApiResponse<AuthResponse> resp = await authService.register(req);
 
-      if (success) {
-        // La mise à jour d'état dans ApiAuthService (isAuthenticated.value = true) 
-        // fait automatiquement naviguer AuthWrapper vers RootScreen.
-        Get.offAllNamed("/root");
-        Get.snackbar(
-          "Succès",
-          "Inscription réussie ! Vous êtes connecté(e).",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: const Color(0xFF34A853),
-          colorText: Colors.white,
-          margin: const EdgeInsets.all(10),
-        );
-      } else {
-        // L'erreur est gérée dans le service, mais on affiche un message générique si échec.
-         Get.snackbar(
-          "Erreur d'Inscription",
-          "L'inscription a échoué. Veuillez vérifier vos informations et réessayer.",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          margin: const EdgeInsets.all(10),
-        );
+      setState(() => _isLoading = false);
+
+      if (resp is Success<AuthResponse>) {
+          final auth = resp.data;
+          final token = auth.token;
+
+          if (token != null && token.isNotEmpty) {
+            await ApiAuthService.to.setToken(token); 
+          }
+          Get.offAllNamed('/root');
+          Get.snackbar("Succès", "Inscription réussie", backgroundColor: Colors.green, colorText: Colors.white);
+      }  else {
+        final code = (resp as Failure).code;
+        Get.snackbar("Erreur", "Inscription échouée (code: $code)", backgroundColor: Colors.red, colorText: Colors.white);
       }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      Get.snackbar("Erreur réseau", e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
   // -----------------------------------------------------------------
@@ -289,7 +277,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             onPressed: _isLoading ? null : _handleRegister,
                             style: ButtonStyle(
                               backgroundColor: WidgetStateProperty.all(
-                                const Color(0xFF34A853),
+                                const Color.fromARGB(255, 235, 240, 236),
                               ),
                               shape: WidgetStateProperty.all(
                                 RoundedRectangleBorder(
@@ -303,12 +291,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       width: 24,
                                       height: 24,
                                       child: CircularProgressIndicator(
-                                        color: Colors.white,
+                                        color: Colors.black,
                                         strokeWidth: 3,
                                       ),
                                     ),
                                   )
-                                : const Text("Inscription"),
+                                : const Text(
+                                    "Inscription",
+                                    style: TextStyle(color: Colors.black),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 28),
@@ -328,7 +319,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 },
                                 child: const Text(
                                   "Se connecter",
-                                  style: TextStyle(color: Colors.white),
+                                style: TextStyle(
+                                  color: Colors.white, 
+                                  fontWeight: FontWeight.bold, // Rendu plus visible
+                                  decoration: TextDecoration.underline,
+                                ),
                                 ),
                               ),
                             ],

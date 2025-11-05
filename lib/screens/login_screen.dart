@@ -186,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: _handleLogin, // Appel de la fonction sans Firebase
                             style: ButtonStyle(
                               backgroundColor: WidgetStateProperty.all(
-                                const Color(0xFF34A853),
+                                const Color.fromARGB(255, 231, 236, 233),
                               ),
                               shape: WidgetStateProperty.all(
                                 RoundedRectangleBorder(
@@ -194,7 +194,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-                            child: const Text("Connexion"),
+                            child: const Text(
+                              "Connexion",
+                                style: TextStyle(color: Colors.black),
+                              ),
                           ),
                         ),
                         const SizedBox(height: 28),
@@ -211,7 +214,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             GestureDetector(
                               onTap: () {
-                                // Note: Assurez-vous que la route '/register' est définie dans Get.
                                 Get.toNamed('/register'); 
                               },
                               child: const Text(

@@ -13,7 +13,7 @@ final class AuthService with HttpProvider {
   Future<ApiResponse<AuthResponse>> login(LoginRequest request) async {
     final response = await httpClient.post(
       "${Constants.apiBaseUrl}/api/login".toUri(),
-      body: request.toJson(),
+      body: request.toRawJson(),
     );
 
     if (response.statusCode == HttpStatus.ok) {
@@ -27,7 +27,7 @@ final class AuthService with HttpProvider {
   Future<ApiResponse<AuthResponse>> register(RegisterRequest request) async {
     final response = await httpClient.post(
       "${Constants.apiBaseUrl}/api/register".toUri(),
-      body: request.toJson(),
+      body: request.toRawJson(),
     );
 
     if (response.statusCode == HttpStatus.ok ||

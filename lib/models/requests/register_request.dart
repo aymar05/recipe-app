@@ -4,22 +4,26 @@ class RegisterRequest {
   String? name;
   String? email;
   String? password;
+  String? passwordConfirmation;
 
   RegisterRequest({
     this.name,
     this.email,
     this.password,
+    this.passwordConfirmation,
   });
 
   RegisterRequest copyWith({
     String? name,
     String? email,
     String? password,
+    String? passwordConfirmation,
   }) {
     return RegisterRequest(
       name: name ?? this.name,
       email: email ?? this.email,
       password: password ?? this.password,
+      passwordConfirmation: passwordConfirmation ?? this.passwordConfirmation,
     );
   }
 
@@ -36,6 +40,7 @@ class RegisterRequest {
       name: json["name"],
       email: json["email"],
       password: json["password"],
+      passwordConfirmation: json["password_confirmation"],
     );
   }
 
@@ -44,6 +49,7 @@ class RegisterRequest {
       "name": name,
       "email": email,
       "password": password,
+      "password_confirmation": passwordConfirmation,
     };
   }
 }
