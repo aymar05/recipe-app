@@ -2,8 +2,9 @@ import 'package:recipe_app/config/theme.dart';
 import 'package:recipe_app/screens/account/root_screen.dart';
 import 'package:recipe_app/screens/auth_wrapper.dart';
 import 'package:recipe_app/screens/login_screen.dart';
-import 'package:recipe_app/screens/profile_page.dart';
+import 'package:recipe_app/screens/account/profile_screen.dart';
 import 'package:recipe_app/screens/register_screen.dart';
+import 'package:recipe_app/screens/account/changePassword_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 // IMPORTATIONS MISES À JOUR
@@ -28,7 +29,7 @@ Future<void> initServices() async {
   Get.put(ApiAuthService());
   
   // Enregistre ApiClient
-  Get.put(ApiClient(baseUrl: 'http://192.168.1.18:8000'));
+  Get.put(ApiClient(baseUrl: 'http://192.168.1.64:8000'));
   
   // Enregistre APIService
   Get.put(APIService());

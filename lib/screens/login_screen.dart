@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:recipe_app/services/auth_service.dart';
+import 'package:recipe_app/models/requests/login_request.dart';
+import 'package:recipe_app/services/api_auth_service.dart';
+import 'package:recipe_app/models/auth_response.dart';
+import 'package:recipe_app/services/api/entities/api_response.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,26 +17,68 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
 
-  // Fonction de connexion simulée (sans Firebase)
-  void _handleLogin() {
-    if (_formKey.currentState!.validate()) {
-      // Simulation d'une tentative de connexion réussie.
-      // Dans une application réelle, vous appelleriez ici un service
-      // d'authentification local ou un API.
-      
-      // Simuler un petit délai pour l'expérience utilisateur
-      Future.delayed(const Duration(milliseconds: 500), () {
-        // Afficher un succès et naviguer
+  void _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    final req = LoginRequest(email: email, password: password);
+
+    final authService = AuthService();
+    try {
+      final ApiResponse<AuthResponse> resp = await authService.login(req);
+
+      setState(() => _isLoading = false);
+
+      if (resp is Success<AuthResponse>) {
+        final auth = resp.data;
+        final token = auth.token;
+        final user = auth.user; // Récupération de l'objet User
+
+        // 1. Sauvegarde du Token
+        if (token != null && token.isNotEmpty) {
+          await ApiAuthService.to.setToken(token);
+        }
+
+        // 2. Sauvegarde de l'Utilisateur pour le Profil
+        if (user != null) {
+          await ApiAuthService.to.setUser(user);
+        }
+
+        // 3. Navigation
+        Get.offAllNamed('/root'); 
+        
         Get.snackbar(
-          "Succès", 
-          "Connexion réussie (simulée)",
+          "Succès",
+          "Connexion réussie",
           backgroundColor: Colors.green,
-          colorText: Colors.white
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
         );
-        // Note: Assurez-vous que la route '/home' est définie dans Get.
-        Get.toNamed('/home'); 
-      });
+      } else {
+        final code = (resp as Failure).code;
+        Get.snackbar(
+          "Erreur de connexion",
+          "Échec de la connexion (code: $code). Vérifiez vos identifiants.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      Get.snackbar(
+        "Erreur réseau",
+        "Impossible de se connecter: $e",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
     }
   }
 
@@ -47,8 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Arrière-plan (ImageAsset n'est pas inclus dans ce snippet,
-          // mais le code de l'arrière-plan est conservé.)
+          // Arrière-plan
           Container(
             height: MediaQuery.of(context).size.height,
             decoration: const BoxDecoration(
@@ -107,7 +153,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(55),
                           ),
-                          // Image Asset (conservée mais non résolue sans le fichier)
                           child: Image.asset(
                             "assets/images/splash.png",
                             width: 52,
@@ -125,10 +170,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
-                            style: const TextStyle(color: Colors.white), // Ajouté pour la visibilité
+                            style: const TextStyle(color: Colors.white),
                             validator: (value) {
                               if (value!.isEmpty) {
-                                return "Veuillez entrer votre email."; // Message de validation mis à jour
+                                return "Veuillez entrer votre email.";
                               }
                               return null;
                             },
@@ -147,11 +192,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 45,
                           child: TextFormField(
                             controller: _passwordController,
-                            obscureText: true, // Ajouté pour la sécurité
-                            style: const TextStyle(color: Colors.white), // Ajouté pour la visibilité
+                            obscureText: true,
+                            style: const TextStyle(color: Colors.white),
                             validator: (value) {
                               if (value!.isEmpty) {
-                                return "Veuillez entrer votre mot de passe."; // Message de validation mis à jour
+                                return "Veuillez entrer votre mot de passe.";
                               }
                               return null;
                             },
@@ -178,26 +223,36 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                         const SizedBox(height: 28),
-                        // Bouton de Connexion (Mise à jour pour appeler _handleLogin)
+                        // Bouton de Connexion
                         SizedBox(
                           height: 45,
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: _handleLogin, // Appel de la fonction sans Firebase
+                            onPressed: _isLoading ? null : _handleLogin,
                             style: ButtonStyle(
-                              backgroundColor: WidgetStateProperty.all(
-                                const Color.fromARGB(255, 231, 236, 233),
-                              ),
-                              shape: WidgetStateProperty.all(
+                              backgroundColor: MaterialStateProperty.all(const Color.fromARGB(255, 235, 240, 236)),
+                              shape: MaterialStateProperty.all(
                                 RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
+                              foregroundColor: MaterialStateProperty.all(Colors.black),
                             ),
-                            child: const Text(
-                              "Connexion",
-                                style: TextStyle(color: Colors.black),
-                              ),
+                            child: _isLoading
+                                ? const Center(
+                                    child: SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.black,
+                                        strokeWidth: 3,
+                                      ),
+                                    ),
+                                  )
+                                : const Text(
+                                    "Se connecter",
+                                    style: TextStyle(color: Colors.black),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 28),
@@ -220,7 +275,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 "S'inscrire",
                                 style: TextStyle(
                                   color: Colors.white, 
-                                  fontWeight: FontWeight.bold, // Rendu plus visible
+                                  fontWeight: FontWeight.bold,
                                   decoration: TextDecoration.underline,
                                 ),
                               ),

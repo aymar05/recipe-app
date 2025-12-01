@@ -1,236 +1,140 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:recipe_app/services/api_auth_service.dart';
+import 'package:recipe_app/services/auth_service.dart';
+import 'package:recipe_app/screens/account/editProfil_screen.dart';
+import 'package:recipe_app/screens/account/changePassword_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: Container(
-          margin: const EdgeInsets.all(8.0),
-          decoration: const BoxDecoration(
-            color: Colors.grey,
-            shape: BoxShape.circle,
+  Future<void> _logout() async {
+    final authService = AuthService();
+    try {
+      await authService.logout();
+    } catch (_) {}
+    await ApiAuthService.to.clearToken();
+    Get.offAllNamed('/login');
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Déconnexion'),
+        content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Annuler'),
           ),
-          child: const Icon(
-            Icons.person,
-            color: Colors.white,
-            size: 20,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            
-            // Photo de profil et nom
-            Column(
-              children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.grey.shade300,
-                      width: 2,
-                    ),
-                    image: const DecorationImage(
-                      image: NetworkImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'David Philips',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 40),
-            
-            // Options du menu
-            _buildMenuOption(
-              icon: Icons.edit,
-              title: 'Modifier le profil',
-              onTap: () {
-                // Action pour modifier le profil
-              },
-            ),
-            
-            const SizedBox(height: 8),
-            
-            _buildMenuOption(
-              icon: Icons.more_horiz,
-              title: 'Changer le mot de passe',
-              onTap: () {
-                // Action pour changer le mot de passe
-              },
-            ),
-            
-            const SizedBox(height: 8),
-            
-            _buildMenuOption(
-              icon: Icons.logout,
-              title: 'Se deconnecter',
-              onTap: () {
-                // Action pour se déconnecter
-                _showLogoutDialog(context);
-              },
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: Colors.orange,
-        unselectedItemColor: Colors.grey,
-        currentIndex: 3, // Index du profil
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Accueil',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Recherche',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favoris',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profil',
+          TextButton(
+            onPressed: () {
+              Get.back();
+              _logout();
+            },
+            child: const Text('Déconnexion', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMenuOption({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 18,
-            ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.grey.shade200,
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  color: Colors.black87,
-                  size: 22,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.grey.shade400,
-                  size: 16,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  @override
+  Widget build(BuildContext context) {
+    // Récupération du service
+    final apiAuthService = ApiAuthService.to;
 
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Se déconnecter',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
-          ),
-          content: const Text(
-            'Êtes-vous sûr de vouloir vous déconnecter ?',
-            style: TextStyle(fontSize: 16),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
+    return Scaffold(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+
+            // On utilise Obx pour rendre cette partie réactive
+            Obx(() {
+              final user = apiAuthService.user;
+              
+              // Gestion du cas où l'utilisateur n'est pas encore chargé ou null
+              if (user == null) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              return Column(
+                children: [
+                  // Avatar
+                  const CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.grey,
+                    child: Icon(Icons.person, size: 60, color: Colors.white),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Infos utilisateur dynamiques
+                  Text(
+                    // Assurez-vous que votre modèle User a bien les champs 'name' ou 'username'
+                    user.name ?? 'Nom inconnu', 
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    user.email ?? 'Pas d\'email', 
+                    style: const TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                ],
+              );
+            }),
+
+            const SizedBox(height: 40),
+
+            // Menu items
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('Modifier le profil'),
+              onTap: () {
+                Get.to(() => EditprofilScreen());
               },
-              child: Text(
-                'Annuler',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
             ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                // Ajouter ici la logique de déconnexion
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Déconnexion réussie'),
-                    backgroundColor: Colors.green,
+            ListTile(
+              leading: const Icon(Icons.lock),
+              title: const Text('Changer le mot de passe'),
+              onTap: () {
+                Get.to(() => ChangePasswordScreen());
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.info),
+              title: const Text('À propos'),
+              onTap: () {
+                Get.dialog(
+                  AlertDialog(
+                    title: const Text('À propos'),
+                    content: const Text('Recipe App v1.0'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Get.back(),
+                        child: const Text('Fermer'),
+                      ),
+                    ],
                   ),
                 );
               },
-              child: const Text(
-                'Se déconnecter',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
             ),
+
+            const Divider(),
+
+            // Logout
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Se déconnecter', style: TextStyle(color: Colors.red)),
+              onTap: () => _showLogoutDialog(context),
+            ),
+
+            const SizedBox(height: 40),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }

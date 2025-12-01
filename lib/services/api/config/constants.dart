@@ -1,5 +1,5 @@
 class Constants {
   Constants._();
 
-  static const apiBaseUrl = "http://192.168.1.18:8000";
+  static const apiBaseUrl = "http://192.168.1.64:8000";
 }

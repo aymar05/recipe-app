@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:get/get.dart';
-import 'package:recipe_app/models/recipe_model.dart';
-import 'package:recipe_app/models/recipe_search_result.dart';
+import 'package:recipe_app/models/recipe.dart';
+import 'package:recipe_app/models/comment.dart';
 import 'api_client.dart';
 
 class APIService {
@@ -9,45 +8,82 @@ class APIService {
 
   APIService({ApiClient? client}) : _client = client ?? Get.find<ApiClient>();
 
-  Future<List<RecipeSearchResultModel>> searchByRecipeName(String query) async {
+  // --- RECETTES (Listing avec Pagination) ---
+
+  // Modification ici : on accepte un numéro de page
+  Future<List<Recipe>> getRecipes({int page = 1}) async {
     try {
-      final body = await _client.getJson('/recipes', params: {'name': query});
+      // On envoie le paramètre 'page' standard de Laravel
+      final params = {'page': page.toString()};
+
+      final body = await _client.getJson('/api/recipes', params: params);
+
+      // CAS 1 : Pagination Laravel (clé 'data')
+      if (body is Map && body['data'] != null && body['data'] is List) {
+        final List dataList = body['data'];
+        return dataList.map((e) {
+          final map = (e is Map) ? Map<String, dynamic>.from(e) : <String, dynamic>{};
+          return Recipe.fromJson(map);
+        }).toList();
+      }
+
+      // CAS 2 : Liste simple (Fallback)
       if (body is List) {
         return body.map((e) {
           final map = (e is Map) ? Map<String, dynamic>.from(e) : <String, dynamic>{};
-          return RecipeSearchResultModel.fromJson(map);
+          return Recipe.fromJson(map);
         }).toList();
       }
+
       return [];
     } catch (e) {
+      print("Erreur getRecipes: $e");
       return [];
     }
   }
 
-  Future<List<RecipeSearchResultModel>> searchByIngredients(String ingredientsCsv) async {
+  // --- RECHERCHE DÉDIÉE ---
+  
+  Future<List<Recipe>> searchRecipes(String query) async {
     try {
-      final body = await _client.getJson('/recipes', params: {'ingredients': ingredientsCsv});
+      if (query.trim().isEmpty) return [];
+
+      final body = await _client.getJson('/api/recipes/search', params: {'query': query});
+
+      if (body is Map && body['data'] != null && body['data'] is List) {
+        final List dataList = body['data'];
+        return dataList.map((e) {
+          final map = (e is Map) ? Map<String, dynamic>.from(e) : <String, dynamic>{};
+          return Recipe.fromJson(map);
+        }).toList();
+      }
+
       if (body is List) {
         return body.map((e) {
           final map = (e is Map) ? Map<String, dynamic>.from(e) : <String, dynamic>{};
-          return RecipeSearchResultModel.fromJson(map);
+          return Recipe.fromJson(map);
         }).toList();
       }
+
       return [];
     } catch (e) {
+      print("Erreur searchRecipes: $e");
       return [];
     }
   }
 
-  Future<RecipeModel?> getRecipeById(int id) async {
+  // --- DÉTAIL RECETTE ---
+
+  Future<Recipe?> getRecipeById(int id) async {
     try {
-      final body = await _client.getJson('/recipes/$id');
+      final body = await _client.getJson('/api/recipes/$id');
       if (body == null) return null;
+      
       if (body is Map) {
-        return RecipeModel.fromJson(Map<String, dynamic>.from(body));
-      }
-      if (body is Map && body['data'] != null && body['data'] is Map) {
-        return RecipeModel.fromJson(Map<String, dynamic>.from(body['data']));
+        if (body['data'] != null && body['data'] is Map) {
+           return Recipe.fromJson(Map<String, dynamic>.from(body['data']));
+        }
+        return Recipe.fromJson(Map<String, dynamic>.from(body));
       }
       return null;
     } catch (e) {
@@ -55,29 +91,57 @@ class APIService {
     }
   }
 
-  Future<RecipeModel?> createRecipe(RecipeModel recipe) async {
+  // --- COMMENTAIRES ---
+
+  Future<Comment?> postComment(int recipeId, String text) async {
     try {
-      final body = await _client.postJson('/recipes', body: recipe.toJson());
-      if (body == null) return null;
-      if (body is Map) return RecipeModel.fromJson(Map<String, dynamic>.from(body));
+      final body = await _client.postJson(
+        '/api/recipes/$recipeId/comments', 
+        body: {'text': text}
+      );
+      
+      if (body != null && body is Map) {
+        if (body.containsKey('data')) {
+           return Comment.fromJson(Map<String, dynamic>.from(body['data']));
+        }
+        return Comment.fromJson(Map<String, dynamic>.from(body));
+      }
       return null;
     } catch (e) {
       return null;
     }
   }
 
-  Future<bool> updateRecipe(int id, RecipeModel recipe) async {
+  // --- FAVORIS ---
+
+  Future<List<Recipe>> getFavorites() async {
     try {
-      await _client.putJson('/recipes/$id', body: recipe.toJson());
+      final body = await _client.getJson('/api/favorites');
+
+      if (body is Map && body['data'] != null && body['data'] is List) {
+         return (body['data'] as List).map((e) => Recipe.fromJson(e)).toList();
+      }
+      if (body is List) {
+        return body.map((e) => Recipe.fromJson(e)).toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<bool> addToFavorites(int recipeId) async {
+    try {
+      await _client.postJson('/api/recipes/$recipeId/favorites', body: {});
       return true;
     } catch (e) {
       return false;
     }
   }
 
-  Future<bool> deleteRecipe(int id) async {
+  Future<bool> removeFavorite(int recipeId) async {
     try {
-      await _client.deleteJson('/recipes/$id');
+      await _client.deleteJson('/api/favorites/$recipeId');
       return true;
     } catch (e) {
       return false;
