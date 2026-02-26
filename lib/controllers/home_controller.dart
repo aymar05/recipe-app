@@ -52,8 +52,6 @@ class HomeController extends GetxController {
         recipeList.addAll(newRecipes);
       }
 
-      // Si on reçoit moins de 10 items (la limite par défaut de Laravel),
-      // c'est qu'on est sur la dernière page.
       if (newRecipes.length < 10) {
         _hasMore = false;
       }

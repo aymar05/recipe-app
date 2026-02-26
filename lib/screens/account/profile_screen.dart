@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:recipe_app/screens/account/changePassword_screen.dart'; // Assurez-vous du nom du fichier
+import 'package:recipe_app/screens/account/edit_profile_form_screen.dart'; // Import du formulaire
+import 'package:recipe_app/services/api/config/constants.dart';
 import 'package:recipe_app/services/api_auth_service.dart';
 import 'package:recipe_app/services/auth_service.dart';
-import 'package:recipe_app/screens/account/editProfil_screen.dart';
-import 'package:recipe_app/screens/account/changePassword_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -25,7 +26,7 @@ class ProfileScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Annuler'),
+            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () {
@@ -41,98 +42,151 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Récupération du service
-    final apiAuthService = ApiAuthService.to;
-
     return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text("Mon Profil", style: TextStyle(color: Colors.black)),
+        centerTitle: true,
+        automaticallyImplyLeading: false, // Pas de flèche retour si c'est un onglet principal
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
             const SizedBox(height: 20),
-
-            // On utilise Obx pour rendre cette partie réactive
+            
+            // --- ZONE DYNAMIQUE (OBS) ---
             Obx(() {
-              final user = apiAuthService.user;
+              final user = ApiAuthService.to.user;
               
-              // Gestion du cas où l'utilisateur n'est pas encore chargé ou null
-              if (user == null) {
-                return const Center(child: CircularProgressIndicator());
+              if (user == null) return const CircularProgressIndicator();
+
+              // Gestion image
+              ImageProvider? imageProvider;
+              if (user.imageUrl != null) {
+                 String url = user.imageUrl!.startsWith('http') 
+                    ? user.imageUrl! 
+                    : "${Constants.apiBaseUrl}/${user.imageUrl!}";
+                 imageProvider = NetworkImage(url);
               }
 
               return Column(
                 children: [
-                  // Avatar
-                  const CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.grey,
-                    child: Icon(Icons.person, size: 60, color: Colors.white),
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey.shade300, width: 2),
+                      color: Colors.white,
+                      image: imageProvider != null 
+                          ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
+                          : null,
+                    ),
+                    child: imageProvider == null 
+                        ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                        : null,
                   ),
-
-                  const SizedBox(height: 20),
-
-                  // Infos utilisateur dynamiques
+                  const SizedBox(height: 16),
                   Text(
-                    // Assurez-vous que votre modèle User a bien les champs 'name' ou 'username'
-                    user.name ?? 'Nom inconnu', 
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    user.name ?? 'Utilisateur',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
-                  const SizedBox(height: 4),
                   Text(
-                    user.email ?? 'Pas d\'email', 
-                    style: const TextStyle(color: Colors.grey, fontSize: 14),
+                    user.email ?? '',
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 ],
               );
             }),
-
+            
             const SizedBox(height: 40),
-
-            // Menu items
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Modifier le profil'),
+            
+            // Options du menu
+            _buildMenuOption(
+              icon: Icons.edit,
+              title: 'Modifier le profil',
               onTap: () {
-                Get.to(() => EditprofilScreen());
+                // Navigation vers le formulaire d'édition
+                Get.to(() => const EditProfileFormScreen());
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.lock),
-              title: const Text('Changer le mot de passe'),
+            
+            const SizedBox(height: 8),
+            
+            _buildMenuOption(
+              icon: Icons.lock,
+              title: 'Changer le mot de passe',
               onTap: () {
-                Get.to(() => ChangePasswordScreen());
+                Get.to(() => const ChangePasswordScreen());
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.info),
-              title: const Text('À propos'),
+            
+            const SizedBox(height: 8),
+            
+            _buildMenuOption(
+              icon: Icons.logout,
+              title: 'Se déconnecter',
               onTap: () {
-                Get.dialog(
-                  AlertDialog(
-                    title: const Text('À propos'),
-                    content: const Text('Recipe App v1.0'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Get.back(),
-                        child: const Text('Fermer'),
-                      ),
-                    ],
-                  ),
-                );
+                _showLogoutDialog(context);
               },
             ),
-
-            const Divider(),
-
-            // Logout
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Se déconnecter', style: TextStyle(color: Colors.red)),
-              onTap: () => _showLogoutDialog(context),
-            ),
-
-            const SizedBox(height: 40),
           ],
+        ),
+      ),
+      // Pas de BottomNavigationBar ici car il est géré par RootScreen
+    );
+  }
+
+  Widget _buildMenuOption({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 18,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.grey.shade200,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: Colors.black87, size: 22),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios, color: Colors.grey.shade400, size: 16),
+              ],
+            ),
+          ),
         ),
       ),
     );

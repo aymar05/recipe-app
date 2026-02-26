@@ -24,21 +24,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: GestureDetector(
-          onTap: () {
-             Scaffold.maybeOf(context)?.openDrawer();
-          },
-          child: const Icon(Icons.menu),
-        ),
         title: const Text("Recipe Book"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              // Get.toNamed('/profile');
-            },
-          ),
-        ],
         centerTitle: true,
       ),
       body: Obx(() {

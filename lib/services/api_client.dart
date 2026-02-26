@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'api_auth_service.dart';
+import 'package:recipe_app/services/api_auth_service.dart';
 
 class ApiException implements Exception {
   final String message;
@@ -17,27 +17,27 @@ class ApiClient {
   final Duration timeout;
 
   ApiClient({
-    this.baseUrl = 'http://192.168.1.64:8000/api',
+    this.baseUrl = 'http://192.168.1.73:8000/api', // Vérifie ton IP
     http.Client? client,
-    this.timeout = const Duration(seconds: 10),
+    this.timeout = const Duration(seconds: 30),
   }) : _http = client ?? http.Client();
 
   Map<String, String> _defaultHeaders() {
-  final headers = <String, String>{
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  };
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
 
-  if (Get.isRegistered<ApiAuthService>()) {
-    final authService = Get.find<ApiAuthService>();
-    final token = authService.token; 
-    if (token != null && token.isNotEmpty) {
-      headers['Authorization'] = 'Bearer $token';
+    if (Get.isRegistered<ApiAuthService>()) {
+      final authService = Get.find<ApiAuthService>();
+      final token = authService.token; 
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
     }
-  }
 
-  return headers;
-}
+    return headers;
+  }
 
   Uri _buildUri(String path, [Map<String, String>? queryParameters]) {
     final cleanedPath = path.startsWith('/') ? path : '/$path';
@@ -86,6 +86,47 @@ class ApiClient {
     final uri = _buildUri(path);
     try {
       final resp = await _http.delete(uri, headers: _defaultHeaders()).timeout(timeout);
+      return _processResponse(resp);
+    } catch (e) {
+      throw ApiException(e.toString());
+    }
+  }
+
+  // --- NOUVELLE VERSION COMPATIBLE WEB ---
+  // On prend les bytes au lieu du chemin
+  Future<dynamic> postMultipart(String path, {
+    required List<int> fileBytes, // Changement ici: bytes au lieu de path
+    required String filename,     // Nom du fichier requis
+    required String fileField,
+    required Map<String, String> fields,
+  }) async {
+    final uri = _buildUri(path);
+    
+    try {
+      var request = http.MultipartRequest('POST', uri);
+
+      request.headers['Accept'] = 'application/json';
+      if (Get.isRegistered<ApiAuthService>()) {
+        final token = Get.find<ApiAuthService>().token;
+        if (token != null && token.isNotEmpty) {
+          request.headers['Authorization'] = 'Bearer $token';
+        }
+      }
+
+      // Ajout du fichier via fromBytes (Compatible Web & Mobile)
+      if (fileBytes.isNotEmpty) {
+        request.files.add(http.MultipartFile.fromBytes(
+          fileField, 
+          fileBytes, 
+          filename: filename
+        ));
+      }
+
+      request.fields.addAll(fields);
+
+      final streamedResponse = await request.send().timeout(timeout);
+      final resp = await http.Response.fromStream(streamedResponse);
+
       return _processResponse(resp);
     } catch (e) {
       throw ApiException(e.toString());
