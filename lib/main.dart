@@ -29,7 +29,7 @@ Future<void> initServices() async {
   Get.put(ApiAuthService());
   
   // Enregistre ApiClient
-  Get.put(ApiClient(baseUrl: 'http://192.168.1.73:8000'));
+  Get.put(ApiClient(baseUrl: 'http://192.168.1.90:8000'));
   
   // Enregistre APIService
   Get.put(APIService());

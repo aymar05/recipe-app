@@ -10,9 +10,12 @@ class HomeController extends GetxController {
   var isMoreLoading = false.obs; // Chargement de la page suivante
   var recipeList = <Recipe>[].obs;
 
+  /// IDs des recettes en favoris — chargé en parallèle
+  var favoriteIds = <int>{}.obs;
+
   // Pagination
   int _currentPage = 1;
-  bool _hasMore = true; // Pour savoir s'il reste des pages
+  bool _hasMore = true;
 
   @override
   void onInit() {
@@ -43,11 +46,19 @@ class HomeController extends GetxController {
         isMoreLoading(true);
       }
 
-      // CORRECTION ICI : On utilise le paramètre nommé 'page'
-      var newRecipes = await _apiService.getRecipes(page: _currentPage);
+      // Chargement recettes + favoris en parallèle
+      final results = await Future.wait([
+        _apiService.getRecipes(page: _currentPage),
+        if (isRefresh) _apiService.getFavorites(),
+      ]);
+
+      final newRecipes = results[0] as List<Recipe>;
 
       if (isRefresh) {
         recipeList.assignAll(newRecipes);
+        final favs = results[1] as List<Recipe>;
+        favoriteIds.assignAll(
+            favs.where((r) => r.id != null).map((r) => r.id!).toSet());
       } else {
         recipeList.addAll(newRecipes);
       }
@@ -55,7 +66,6 @@ class HomeController extends GetxController {
       if (newRecipes.length < 10) {
         _hasMore = false;
       }
-
     } catch (e) {
       print("Erreur fetchRecipes: $e");
     } finally {

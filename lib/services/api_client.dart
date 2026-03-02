@@ -17,7 +17,7 @@ class ApiClient {
   final Duration timeout;
 
   ApiClient({
-    this.baseUrl = 'http://192.168.1.73:8000/api', // Vérifie ton IP
+    this.baseUrl = 'http://192.168.1.90:8000/api', // Vérifie ton IP
     http.Client? client,
     this.timeout = const Duration(seconds: 30),
   }) : _http = client ?? http.Client();

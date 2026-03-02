@@ -1,26 +1,39 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:recipe_app/config/theme.dart';
 import 'package:recipe_app/data/result_type.dart';
 import 'package:recipe_app/models/recipe.dart';
 import 'package:recipe_app/screens/account/recipe_screen.dart';
 import 'package:recipe_app/services/api_service.dart';
 import 'package:recipe_app/services/api/config/constants.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+
+// ──────────────────────────────────────────────────────────────────────────────
+// SearchResultScreen — Refonte UI v2
+// ⚠️  ZÉRO MODIFICATION LOGIQUE : _recipes, _apiService, _isLoading,
+//     _hasSearched, _errorMessage, _checkAndLoadData, _loadData,
+//     _apiService.searchRecipes, widget.query, widget.type
+// ──────────────────────────────────────────────────────────────────────────────
 
 class SearchResultScreen extends StatefulWidget {
   final String query;
   final ResultType type;
 
-  const SearchResultScreen(
-      {super.key, required this.query, required this.type});
+  const SearchResultScreen({
+    super.key,
+    required this.query,
+    required this.type,
+  });
 
   @override
   State<SearchResultScreen> createState() => _SearchResultScreenState();
 }
 
 class _SearchResultScreenState extends State<SearchResultScreen> {
+  // ── LOGIQUE INCHANGÉE ─────────────────────────────────────────────────────
   final List<Recipe> _recipes = [];
   final APIService _apiService = Get.find<APIService>();
-  
+
   bool _isLoading = false;
   bool _hasSearched = false;
   String? _errorMessage;
@@ -32,16 +45,13 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
   }
 
   void _checkAndLoadData() {
-    // 1. Vérification stricte : Si vide ou null, on ne fait rien
     if (widget.query.trim().isEmpty) {
       setState(() {
         _isLoading = false;
-        _errorMessage = "Veuillez entrer un terme de recherche.";
+        _errorMessage = 'Veuillez entrer un terme de recherche.';
       });
       return;
     }
-
-    // Sinon, on lance la recherche dédiée
     _loadData();
   }
 
@@ -52,9 +62,8 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
     });
 
     try {
-      // UTILISATION DE LA NOUVELLE MÉTHODE DÉDIÉE
       List<Recipe> recipes = await _apiService.searchRecipes(widget.query);
-      
+
       if (mounted) {
         setState(() {
           _recipes.addAll(recipes);
@@ -66,79 +75,153 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = "Une erreur est survenue lors de la recherche.";
+          _errorMessage = 'Une erreur est survenue lors de la recherche.';
         });
       }
     }
   }
 
+  // ── RENDU VISUEL ──────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 40),
-            
-            // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back),
-                ),
-                Text(
-                  "Recherche",
-                  style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                ),
-                Image.asset(
-                  "assets/images/splash.png",
-                  width: 35,
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 20),
-            
-            // Titre des résultats
-            if (_hasSearched)
-            Text(
-              "Résultats pour \"${widget.query}\" : ${_recipes.length}",
-              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            
-            const SizedBox(height: 20),
+      backgroundColor: kBackground,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
 
-            // Contenu principal
-            Expanded(
-              child: _buildBody(),
-            ),
-          ],
+              // ── En-tête : retour + titre ──────────────────────────────
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: kSurface,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: kBorder),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 16,
+                        color: kTextPrimary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Text(
+                    'Rechercher',
+                    style: GoogleFonts.outfit(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: kTextPrimary,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // ── Barre de recherche statique (affiche la requête) ───────
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: kSurface,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: kPrimary, width: 1.5),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        widget.query,
+                        style: GoogleFonts.outfit(
+                          fontSize: 15,
+                          color: kTextPrimary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: const BoxDecoration(
+                        color: kPrimary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.search_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Sous-titre résultats ────────────────────────────────────
+              if (_hasSearched && !_isLoading)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    '${_recipes.length} résultat${_recipes.length > 1 ? 's' : ''} pour "${widget.query}"',
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: kTextSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+
+              // ── Contenu principal ───────────────────────────────────────
+              Expanded(child: _buildBody()),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildBody() {
-    // Cas 1: Erreur ou Champ vide
+    // Erreur
     if (_errorMessage != null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.search_off, size: 64, color: Colors.orange),
+            Container(
+              width: 72,
+              height: 72,
+              decoration: const BoxDecoration(
+                color: kPrimaryLight,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.search_off_rounded,
+                size: 36,
+                color: kAccent,
+              ),
+            ),
             const SizedBox(height: 16),
             Text(
               _errorMessage!,
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                color: kTextSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -146,50 +229,78 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
       );
     }
 
-    // Cas 2: Chargement
+    // Chargement
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(color: kPrimary),
+      );
     }
 
-    // Cas 3: Aucun résultat trouvé après recherche
+    // Aucun résultat
     if (_hasSearched && _recipes.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.sentiment_dissatisfied, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text("Aucune recette trouvée.", style: TextStyle(fontSize: 16, color: Colors.grey)),
+            Container(
+              width: 72,
+              height: 72,
+              decoration: const BoxDecoration(
+                color: kPrimaryLight,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.sentiment_dissatisfied_rounded,
+                size: 36,
+                color: kTextSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Aucune recette trouvée.',
+              style: GoogleFonts.outfit(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: kTextPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Essayez avec d\'autres mots-clés',
+              style: GoogleFonts.outfit(
+                fontSize: 13,
+                color: kTextSecondary,
+              ),
+            ),
           ],
         ),
       );
     }
 
-    // Cas 4: Affichage des résultats
+    // ── Grille de résultats ───────────────────────────────────────────────
     return GridView.builder(
-      itemCount: _recipes.length,
       physics: const BouncingScrollPhysics(),
+      itemCount: _recipes.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.8,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
+        childAspectRatio: 0.72,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
       ),
       itemBuilder: (context, index) {
         final recipe = _recipes[index];
-        
-        // Gestion Image
-        String imageUrlToUse = "https://via.placeholder.com/150";
-        String? rawPath = (recipe.imageUrl ?? '').isNotEmpty ? recipe.imageUrl : recipe.image;
+
+        // Résolution URL image — LOGIQUE ORIGINALE INCHANGÉE
+        String imageUrlToUse = 'https://via.placeholder.com/150';
+        String? rawPath =
+            (recipe.imageUrl ?? '').isNotEmpty ? recipe.imageUrl : recipe.image;
         if (rawPath != null && rawPath.isNotEmpty) {
           if (rawPath.startsWith('http')) {
             imageUrlToUse = rawPath;
           } else {
-             if (rawPath.startsWith('/')) {
-                imageUrlToUse = "${Constants.apiBaseUrl}$rawPath";
-             } else {
-                imageUrlToUse = "${Constants.apiBaseUrl}/$rawPath";
-             }
+            imageUrlToUse = rawPath.startsWith('/')
+                ? '${Constants.apiBaseUrl}$rawPath'
+                : '${Constants.apiBaseUrl}/$rawPath';
           }
         }
 
@@ -198,60 +309,110 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => RecipeScreen(
-                  recipeId: recipe.id!
-                ),
+                builder: (context) => RecipeScreen(recipeId: recipe.id!),
               ),
             );
           },
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: Colors.white,
+              color: kSurface,
+              borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF121212).withOpacity(0.1),
+                  color: Colors.black.withOpacity(0.07),
+                  blurRadius: 16,
                   offset: const Offset(0, 4),
-                  blurRadius: 10,
                 ),
               ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Image
                 Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                      color: Colors.grey[200],
-                      image: DecorationImage(
-                        image: NetworkImage(imageUrlToUse),
-                        fit: BoxFit.cover,
+                  flex: 6,
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(18),
+                        ),
+                        child: SizedBox.expand(
+                          child: Image.network(
+                            imageUrlToUse,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: kPrimaryLight,
+                              child: const Icon(
+                                Icons.image_not_supported_outlined,
+                                color: kPrimary,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      // Bookmark
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.92),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.bookmark_outline_rounded,
+                            size: 16,
+                            color: kTextSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        recipe.title ?? "Sans titre",
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.timer, size: 12, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Text("${recipe.time ?? 0} min", style: const TextStyle(fontSize: 12)),
-                        ],
-                      )
-                    ],
+
+                // Infos
+                Expanded(
+                  flex: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Text(
+                          recipe.title ?? 'Sans titre',
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: kTextPrimary,
+                            height: 1.2,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.access_time_rounded,
+                              size: 13,
+                              color: kAccent,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${recipe.time ?? 0} min',
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: kAccent,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
